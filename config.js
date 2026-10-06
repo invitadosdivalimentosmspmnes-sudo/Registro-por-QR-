@@ -4,7 +4,7 @@
  * (ver docs/INSTALACION.md, paso "Publicar la API").
  */
 const CONFIG = {
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwHJtQuXyr9JYSKpSq5nUQ2x71r1MzoVpVweqU1KoGe6uY5eFiKkt1gQ8d0wFm2yLs/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzaM1gIGEpntfJ4wSOzf-nNQ033y_tDs2vSWBuHVuDDzEkpjHkWompErzPELtcmkc0/exec',
   SITE_URL: 'https://invitadosdivalimentosmspmnes-sudo.github.io/Registro-por-QR-/',
   NOMBRE_SISTEMA: 'LACEPMI Presentismo QR',
   NOMBRE_INSTITUCION: 'División de Calidad de Alimentos, Agua y Laboratorio',
