@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Códigos QR · D.C.A.A Presentismo QR</title>
+<title>Códigos QR · D.C.A.A.L Registro por QR</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="responsive.css">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
@@ -16,24 +16,21 @@
   <div class="page-header">
     <div>
       <h1>Códigos QR</h1>
-      <p>Un único QR fijo para escanear con el celular, más los QR de invitados.</p>
+      <p>Dos códigos QR de registro para escanear con el celular, más los QR individuales de invitados.</p>
     </div>
   </div>
 
-  <div class="panel" style="max-width:420px; text-align:center; margin-bottom:26px;">
-    <div class="section-label" style="margin-top:0">QR de acceso al sistema</div>
-    <p style="font-size:13px;">Imprimilo y pegalo en la entrada del laboratorio. Cada empleado lo escanea con
-      su propio celular, busca su nombre y registra su asistencia.</p>
-    <canvas id="qrFijo" style="margin:14px auto"></canvas>
-    <div class="field" style="text-align:left; margin-top:6px;">
-      <label>URL a la que apunta el QR</label>
-      <input type="text" id="inputSiteUrl">
-      <div class="field-hint">Por defecto usa la URL configurada en <code>js/config.js</code> (SITE_URL). Podés pegar otra acá y regenerar el QR solo para esta vista.</div>
+  <div class="qr-access-grid">
+    <div class="panel qr-access-card">
+      <div class="section-label" style="margin-top:0">Registro de empleado</div>
+      <p style="font-size:13px;">Escaneá este código para registrar la asistencia del empleado.</p>
+      <img class="qr-access-image" src="assets/empleado_qr.png" alt="Código QR para el registro de empleado">
     </div>
-    <div style="display:flex; gap:8px; margin-top:12px;">
-      <button class="btn btn--secondary" style="flex:1" id="btnRegenerar">Regenerar</button>
-      <button class="btn btn--secondary" style="flex:1" id="btnDescargarFijo"><i data-lucide="download"></i>Descargar</button>
-      <button class="btn btn--primary" style="flex:1" id="btnImprimirFijo"><i data-lucide="printer"></i>Imprimir</button>
+
+    <div class="panel qr-access-card">
+      <div class="section-label" style="margin-top:0">Registro de invitado</div>
+      <p style="font-size:13px;">Escaneá este código para acceder al registro de invitados.</p>
+      <img class="qr-access-image" src="assets/invitados_qr.png" alt="Código QR para el registro de invitado">
     </div>
   </div>
 
@@ -45,44 +42,11 @@
 </main>
 
 <div id="areaImpresion" class="hidden"></div>
-<div id="areaImpresionFijo" class="hidden"></div>
-
 <script src="config.js"></script>
 <script src="api.js"></script>
 <script src="app.js"></script>
 <script src="qr.js"></script>
 <script>
-
-/* ---------- QR fijo de acceso ---------- */
-
-const inputSiteUrl = document.getElementById('inputSiteUrl');
-inputSiteUrl.value = CONFIG.SITE_URL;
-
-async function dibujarQrFijo() {
-  await dibujarQr(document.getElementById('qrFijo'), inputSiteUrl.value.trim());
-}
-dibujarQrFijo();
-
-document.getElementById('btnRegenerar').addEventListener('click', dibujarQrFijo);
-
-document.getElementById('btnDescargarFijo').addEventListener('click', async function () {
-  const dataUrl = await qrComoDataUrl(inputSiteUrl.value.trim());
-  descargarDataUrl(dataUrl, 'qr-acceso-dcaa.png');
-});
-
-document.getElementById('btnImprimirFijo').addEventListener('click', async function () {
-  const dataUrl = await qrComoDataUrl(inputSiteUrl.value.trim());
-  const area = document.getElementById('areaImpresionFijo');
-  area.innerHTML =
-    '<div style="text-align:center; padding:40px;">' +
-      '<img src="' + dataUrl + '" style="width:320px; height:320px;">' +
-      '<h2 style="margin-top:20px;">División de Calidad de Alimentos, Agua y Laboratorio</h2>' +
-      '<p>Escaneá este código con tu celular para registrar tu asistencia</p>' +
-    '</div>';
-  area.classList.remove('hidden');
-  window.print();
-  area.classList.add('hidden');
-});
 
 /* ---------- QR de invitados ---------- */
 
