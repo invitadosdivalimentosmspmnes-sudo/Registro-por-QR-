@@ -7,7 +7,7 @@
 const Api = (function () {
 
   function urlConfigurada() {
-    return CONFIG.APPS_SCRIPT_URL && CONFIG.APPS_SCRIPT_URL.indexOf('PEGAR_AQUI') === -1;
+    return CONFIG.APPS_SCRIPT_URL && CONFIG.APPS_SCRIPT_URL.indexOf('https://script.google.com/macros/s/AKfycbwHJtQuXyr9JYSKpSq5nUQ2x71r1MzoVpVweqU1KoGe6uY5eFiKkt1gQ8d0wFm2yLs/exec') === -1;
   }
 
   async function get(action, params) {
