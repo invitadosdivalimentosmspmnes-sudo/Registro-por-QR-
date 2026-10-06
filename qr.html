@@ -8,6 +8,36 @@
 <link rel="stylesheet" href="responsive.css">
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+<style>
+  /* Contenedor Grid principal para los accesos rápido */
+  .qr-access-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 260px));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  /* Ajuste de tamaño de cada tarjeta/contenedor */
+  .qr-access-card {
+    padding: 16px;
+    text-align: center;
+    max-width: 260px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Reducción de la imagen del código QR */
+  .qr-access-image {
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+    margin-top: 12px;
+    display: block;
+  }
+</style>
 </head>
 <body>
 
