@@ -5,7 +5,7 @@
  */
 const CONFIG = {
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwHJtQuXyr9JYSKpSq5nUQ2x71r1MzoVpVweqU1KoGe6uY5eFiKkt1gQ8d0wFm2yLs/exec',
-  SITE_URL: '',
+  SITE_URL: 'https://invitadosdivalimentosmspmnes-sudo.github.io/Registro-por-QR-/',
   NOMBRE_SISTEMA: 'LACEPMI Presentismo QR',
   NOMBRE_INSTITUCION: 'División de Calidad de Alimentos, Agua y Laboratorio',
   SUBTITULOS_INSTITUCIONALES: [
