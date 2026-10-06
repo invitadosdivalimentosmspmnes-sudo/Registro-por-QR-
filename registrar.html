@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registrar · D.C.A.A Presentismo QR</title>
+<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/responsive.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+
+<main class="main">
+  <a class="back-link" href="index.html"><i data-lucide="arrow-left"></i>Volver al dashboard</a>
+  <div class="page-header">
+    <div>
+      <h1>Registrar asistencia</h1>
+      <p>Buscá tu nombre y apellido, seleccioná tu registro y elegí el tipo de movimiento.</p>
+    </div>
+  </div>
+
+  <div id="contenido" class="scanner-shell" style="max-width:520px">
+    <!-- Se completa dinámicamente -->
+  </div>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const tipoPreseleccionado = params.get('tipo');
+
+const contenido = document.getElementById('contenido');
+let personas = [];
+let personaActual = null;
+let tipoActual = tipoPreseleccionado;
+let observacionActual = '';
+
+/* ---------- Paso 1: búsqueda ---------- */
+
+async function vistaBusqueda() {
+  personaActual = null;
+  observacionActual = '';
+  contenido.innerHTML =
+    '<div class="field"><label>Buscá tu nombre y apellido</label>' +
+    '<input type="text" id="inputBusquedaPersona" placeholder="Ej: Carlos Aguirre…" autocomplete="off"></div>' +
+    '<div id="resultadosBusqueda"></div>';
+  refrescarIconos();
+
+  const input = document.getElementById('inputBusquedaPersona');
+  input.focus();
+
+  if (personas.length === 0) {
+    document.getElementById('resultadosBusqueda').innerHTML = elCarga('Cargando nómina…');
+    try {
+      const [empleados, invitados] = await Promise.all([Api.getEmpleados(), Api.getInvitados()]);
+      personas = empleados
+        .filter(function (e) { return String(e.ESTADO).toUpperCase() !== 'INACTIVO'; })
+        .map(function (e) { return { tipo: 'EMPLEADO', id: e.ID_EMPLEADO, nombre: e.NOMBRE_COMPLETO, dni: e.DNI }; })
+        .concat(invitados.map(function (i) { return { tipo: 'INVITADO', id: i.ID_INVITADO, nombre: i.NOMBRE_COMPLETO, dni: i.DNI }; }));
+      renderResultados('');
+    } catch (err) {
+      document.getElementById('resultadosBusqueda').innerHTML = elError(mensajeErrorApi(err));
+    }
+  } else {
+    renderResultados('');
+  }
+
+  input.addEventListener('input', function () { renderResultados(input.value); });
+}
+
+function renderResultados(query) {
+  const cont = document.getElementById('resultadosBusqueda');
+  const q = query.trim().toLowerCase();
+
+  if (q.length === 0) {
+    cont.innerHTML = '<p class="field-hint">Escribí al menos parte de tu nombre o apellido para buscar.</p>';
+    return;
+  }
+
+  const coincidencias = personas.filter(function (p) { return p.nombre.toLowerCase().indexOf(q) !== -1; }).slice(0, 12);
+
+  if (coincidencias.length === 0) {
+    cont.innerHTML = elVacio('No se encontró a nadie con ese nombre', 'Revisá la escritura o consultá con el laboratorio.', 'user-x');
+    refrescarIconos();
+    return;
+  }
+
+  cont.innerHTML = '<div class="persona-grid" style="grid-template-columns:1fr; margin-top:12px;">' +
+    coincidencias.map(function (p, i) {
+      return '<div class="persona-card" style="cursor:pointer; display:flex; align-items:center; gap:12px;" data-idx="' + i + '">' +
+        '<div class="persona-card__avatar" style="margin-bottom:0">' + escapeHtml(p.nombre.charAt(0)) + '</div>' +
+        '<div style="flex:1"><div class="persona-card__nombre">' + escapeHtml(p.nombre) + '</div>' +
+        '<div class="persona-card__meta" style="margin-top:2px">' + (p.tipo === 'EMPLEADO' ? 'Empleado' : 'Invitado') + ' · DNI ' + enmascararDni(p.dni) + '</div></div>' +
+        '<i data-lucide="chevron-right" style="width:18px;height:18px;color:var(--color-gris-oscuro)"></i>' +
+      '</div>';
+    }).join('') + '</div>';
+  refrescarIconos();
+
+  document.querySelectorAll('[data-idx]').forEach(function (card) {
+    card.addEventListener('click', function () {
+      personaActual = coincidencias[Number(card.getAttribute('data-idx'))];
+      vistaConfirmarSoyYo();
+    });
+  });
+}
+
+/* ---------- Paso 2: confirmar identidad ---------- */
+
+function vistaConfirmarSoyYo() {
+  const p = personaActual;
+  contenido.innerHTML =
+    '<div class="persona-identificada">' +
+      '<div class="persona-identificada__badge">' + (p.tipo === 'EMPLEADO' ? 'EMPLEADO' : 'INVITADO') + '</div>' +
+      '<div class="persona-identificada__nombre">' + escapeHtml(p.nombre) + '</div>' +
+      '<div class="persona-identificada__dni">DNI: ' + enmascararDni(p.dni) + '</div>' +
+    '</div>' +
+    '<div style="display:flex; gap:10px; margin-top:16px;">' +
+      '<button class="btn btn--secondary" style="flex:1" id="btnNoSoyYo">No soy yo</button>' +
+      '<button class="btn btn--primary" style="flex:2" id="btnSoyYo">Sí, soy yo</button>' +
+    '</div>';
+  refrescarIconos();
+  document.getElementById('btnNoSoyYo').addEventListener('click', vistaBusqueda);
+  document.getElementById('btnSoyYo').addEventListener('click', vistaSeleccionTipo);
+}
+
+/* ---------- Paso 3: tipo de registro ---------- */
+
+function vistaSeleccionTipo() {
+  const p = personaActual;
+  const tiposHtml = TIPOS_REGISTRO.map(function (t) {
+    const sel = t.valor === tipoActual ? ' is-selected' : '';
+    return '<button class="tipo-btn' + sel + '" data-tipo="' + t.valor + '">' +
+      '<i data-lucide="' + t.icono + '"></i><span>' + t.etiqueta + '</span></button>';
+  }).join('');
+
+  contenido.innerHTML =
+    '<div class="persona-identificada" style="padding:14px 20px;">' +
+      '<div class="persona-identificada__nombre" style="font-size:16px">' + escapeHtml(p.nombre) + '</div>' +
+    '</div>' +
+    '<div class="section-label">Seleccioná el tipo de registro</div>' +
+    '<div class="tipo-grid">' + tiposHtml + '</div>' +
+    '<div id="observacionWrap"></div>' +
+    '<div style="margin-top:16px; display:flex; gap:10px;">' +
+      '<button class="btn btn--secondary" style="flex:1" onclick="vistaConfirmarSoyYo()">Volver</button>' +
+      '<button class="btn btn--primary" style="flex:2" id="btnContinuar" disabled>Confirmar</button>' +
+    '</div>';
+  refrescarIconos();
+
+  document.querySelectorAll('.tipo-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      tipoActual = btn.getAttribute('data-tipo');
+      document.querySelectorAll('.tipo-btn').forEach(function (b) { b.classList.remove('is-selected'); });
+      btn.classList.add('is-selected');
+      actualizarObservacion();
+      actualizarBotonContinuar();
+    });
+  });
+
+  document.getElementById('btnContinuar').addEventListener('click', function () {
+    if (tipoActual === 'OTRO MOTIVO') {
+      observacionActual = document.getElementById('inputObservacion').value.trim();
+    }
+    vistaConfirmacion();
+  });
+
+  actualizarObservacion();
+  actualizarBotonContinuar();
+}
+
+function actualizarObservacion() {
+  const wrap = document.getElementById('observacionWrap');
+  const esOtro = tipoActual === 'OTRO MOTIVO';
+  const esOpcional = ['AUDITORÍA', 'CAPACITACIÓN', 'REUNIÓN'].indexOf(tipoActual) !== -1;
+  if (esOtro) {
+    wrap.innerHTML =
+      '<div class="field" style="margin-top:14px"><label>Especifique el motivo *</label>' +
+      '<textarea id="inputObservacion" rows="2" placeholder="Detalle el motivo del registro"></textarea></div>';
+    document.getElementById('inputObservacion').addEventListener('input', actualizarBotonContinuar);
+  } else if (esOpcional) {
+    wrap.innerHTML =
+      '<div class="field" style="margin-top:14px"><label>Observación (opcional)</label>' +
+      '<textarea id="inputObservacion" rows="2" placeholder="Agregar contexto adicional"></textarea></div>';
+  } else {
+    wrap.innerHTML = '';
+  }
+}
+
+function actualizarBotonContinuar() {
+  const btn = document.getElementById('btnContinuar');
+  if (!btn) return;
+  if (!tipoActual) { btn.disabled = true; return; }
+  if (tipoActual === 'OTRO MOTIVO') {
+    const val = document.getElementById('inputObservacion') ? document.getElementById('inputObservacion').value.trim() : '';
+    btn.disabled = val.length === 0;
+  } else {
+    btn.disabled = false;
+  }
+}
+
+/* ---------- Paso 4: confirmación final ---------- */
+
+function vistaConfirmacion() {
+  const p = personaActual;
+  const info = tipoRegistroInfo(tipoActual);
+  contenido.innerHTML =
+    '<div class="panel">' +
+      '<div class="section-label" style="margin-top:0">Confirmar registro</div>' +
+      '<p style="font-size:15px; color:var(--color-texto); font-weight:600">' + escapeHtml(p.nombre) + '</p>' +
+      '<p>' + (p.tipo === 'EMPLEADO' ? 'Empleado' : 'Invitado') + ' · ' + escapeHtml(p.id) + '</p>' +
+      '<div style="margin:14px 0"><span class="badge badge--azul"><i data-lucide="' + info.icono + '" style="width:12px;height:12px"></i>' + info.etiqueta + '</span></div>' +
+      (observacionActual ? '<p><strong>Observación:</strong> ' + escapeHtml(observacionActual) + '</p>' : '') +
+      '<div style="display:flex; gap:10px; margin-top:16px;">' +
+        '<button class="btn btn--secondary" style="flex:1" onclick="vistaSeleccionTipo()">Volver</button>' +
+        '<button class="btn btn--primary" style="flex:2" id="btnGuardar">Guardar registro</button>' +
+      '</div>' +
+    '</div>';
+  refrescarIconos();
+
+  document.getElementById('btnGuardar').addEventListener('click', function () { guardarRegistro(false); });
+}
+
+async function guardarRegistro(forzar) {
+  const p = personaActual;
+  const btn = document.getElementById('btnGuardar');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+  try {
+    const res = await Api.registrar({
+      persona_tipo: p.tipo,
+      persona_id: p.id,
+      tipo: tipoActual,
+      observacion: observacionActual,
+      forzar: forzar
+    });
+
+    if (!res.ok && res.duplicado) {
+      vistaDuplicado();
+      return;
+    }
+    if (!res.ok) {
+      vistaErrorGuardado(res.error || 'No se pudo guardar el registro.');
+      return;
+    }
+
+    vistaExito(res.registro);
+  } catch (err) {
+    vistaErrorGuardado(mensajeErrorApi(err));
+  }
+}
+
+function vistaDuplicado() {
+  contenido.innerHTML =
+    '<div class="overlay"><div class="modal">' +
+      '<h3>Posible registro duplicado</h3>' +
+      '<p>Ya se registró este mismo movimiento para <strong>' + escapeHtml(personaActual.nombre) + '</strong> hace instantes. ¿Querés registrarlo de todas formas?</p>' +
+      '<div class="modal__actions">' +
+        '<button class="btn btn--secondary" id="btnCancelarDup">Cancelar</button>' +
+        '<button class="btn btn--primary" id="btnForzarDup">Registrar igual</button>' +
+      '</div>' +
+    '</div></div>';
+  document.getElementById('btnCancelarDup').addEventListener('click', vistaBusqueda);
+  document.getElementById('btnForzarDup').addEventListener('click', function () { guardarRegistro(true); });
+}
+
+function vistaErrorGuardado(mensaje) {
+  contenido.innerHTML =
+    '<div class="feedback feedback--error">' +
+      '<div class="feedback__icon"><i data-lucide="alert-triangle" style="width:100%;height:100%"></i></div>' +
+      '<div class="feedback__titulo">No se pudo guardar el registro</div>' +
+      '<p>' + escapeHtml(mensaje) + '</p>' +
+      '<button class="btn btn--primary" style="margin-top:12px" onclick="vistaBusqueda()">Volver a buscar</button>' +
+    '</div>';
+  refrescarIconos();
+}
+
+function vistaExito(registro) {
+  const info = tipoRegistroInfo(registro.TIPO_REGISTRO);
+  contenido.innerHTML =
+    '<div class="feedback feedback--exito">' +
+      '<div class="feedback__icon"><i data-lucide="check-circle" style="width:100%;height:100%"></i></div>' +
+      '<div class="feedback__titulo">Registro realizado correctamente</div>' +
+      '<p style="font-weight:600; color:var(--color-texto); font-size:15px; margin-top:8px">' + escapeHtml(registro.NOMBRE_COMPLETO) + '</p>' +
+      '<p>' + info.etiqueta + ' — ' + formatFechaCorta(registro.FECHA) + ' · ' + registro.HORA + '</p>' +
+      '<button class="btn btn--primary" style="margin-top:14px" onclick="reiniciar()">Registrar a otra persona</button>' +
+    '</div>';
+  refrescarIconos();
+}
+
+function reiniciar() {
+  tipoActual = tipoPreseleccionado;
+  observacionActual = '';
+  vistaBusqueda();
+}
+
+vistaBusqueda();
+</script>
+</body>
+</html>
