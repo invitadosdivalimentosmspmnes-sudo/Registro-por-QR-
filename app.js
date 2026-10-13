@@ -4,7 +4,7 @@
  */
 
 const NAV_ITEMS = [
-  { href: 'index.html', label: 'Dashboard', icon: 'layout-dashboard' },
+  { href: 'index.html', label: 'Inicio', icon: 'layout-dashboard' },
   { href: 'registrar.html', label: 'Registrar', icon: 'user-check' },
   { href: 'registros.html', label: 'Registros', icon: 'list' },
   { href: 'empleados.html', label: 'Empleados', icon: 'users' },
