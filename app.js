@@ -33,7 +33,7 @@ function renderNav() {
   sidebar.innerHTML =
     '<div class="sidebar__brand">' +
       '<div class="sidebar__brand-mark">LC</div>' +
-      '<div class="sidebar__brand-text">D.C.A.A<span>Presentismo QR</span></div>' +
+      '<div class="sidebar__brand-text">D.C.A.A.L<span>Registro por QR</span></div>' +
     '</div>' +
     '<ul class="nav-list">' + itemsHtml + '</ul>' +
     '<div class="sidebar__footer">División de Calidad de Alimentos,<br>Agua y Laboratorio</div>';
@@ -41,7 +41,7 @@ function renderNav() {
   const topbar = document.createElement('header');
   topbar.className = 'topbar';
   topbar.innerHTML =
-    '<div class="topbar__brand"><div class="topbar__brand-mark">LC</div>D.C.A.A</div>' +
+    '<div class="topbar__brand"><div class="topbar__brand-mark">LC</div>D.C.A.A.L</div>' +
     '<button class="hamburger" id="btnHamburger" aria-label="Abrir menú"><i data-lucide="menu"></i></button>';
 
   const scrim = document.createElement('div');
